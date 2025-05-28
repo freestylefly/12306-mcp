@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G522 Journey Explorer | 旅程探索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.0/dist/framer-motion.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --tech-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        * {
+            font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+        
+        .bento-card {
+            border-radius: 24px;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+        
+        .bento-card:hover::before {
+            opacity: 0.1;
+        }
+        
+        .bento-card-with-image {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        
+        .bento-card-with-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .bento-card-with-image > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bento-card-with-image .food-item,
+        .bento-card-with-image .attraction-item {
+            z-index: 3;
+        }
+        
+        .hero-number {
+            font-size: clamp(4rem, 12vw, 12rem);
+            font-weight: 900;
+            line-height: 0.8;
+            background: var(--tech-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        
+        .station-number {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .gradient-text {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 40px rgba(102, 126, 234, 0.3);
+        }
+        
+        .tech-border {
+            border: 1px solid;
+            border-image: var(--tech-gradient) 1;
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .parallax-bg {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .hero-bg {
+            background-image: 
+                linear-gradient(135deg, rgba(15, 15, 35, 0.8) 0%, rgba(26, 26, 46, 0.6) 100%),
+                url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .large-card {
+            grid-column: span 2;
+        }
+        
+        .tall-card {
+            grid-row: span 2;
+        }
+        
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .food-item {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 12px;
+            height: 80px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .food-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .food-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7) 100%);
+            z-index: 1;
+        }
+        
+        .food-item-label {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            right: 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+        
+        .attraction-item {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 12px;
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .attraction-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.9) 100%);
+            z-index: 1;
+        }
+        
+        .attraction-item-label {
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+            right: 16px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            z-index: 2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .large-card, .tall-card {
+                grid-column: span 1;
+                grid-row: span 1;
+            }
+            
+            .bento-grid {
+                grid-template-columns: 1fr;
+                padding: 16px;
+                gap: 16px;
+            }
+            
+            .hero-bg {
+                background-attachment: scroll;
+            }
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--tech-gradient);
+            transform-origin: left;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body class="parallax-bg text-white overflow-x-hidden">
+    <div class="scroll-indicator" id="scrollIndicator"></div>
+    
+    <div class="floating-elements">
+        <div class="floating-element" style="width: 60px; height: 60px; top: 10%; left: 10%; animation-delay: 0s;"></div>
+        <div class="floating-element" style="width: 40px; height: 40px; top: 20%; right: 15%; animation-delay: 2s;"></div>
+        <div class="floating-element" style="width: 80px; height: 80px; bottom: 30%; left: 20%; animation-delay: 4s;"></div>
+        <div class="floating-element" style="width: 50px; height: 50px; bottom: 10%; right: 10%; animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center relative px-6 hero-bg">
+        <div class="text-center max-w-6xl mx-auto fade-in" id="hero">
+            <div class="hero-number mb-8">G522</div>
+            <h1 class="text-6xl md:text-8xl font-black mb-6 gradient-text leading-tight">
+                旅程探索
+                <br/>
+                <span class="text-3xl md:text-4xl font-normal opacity-70">Journey Explorer</span>
+            </h1>
+            <p class="text-xl md:text-2xl opacity-80 mb-12 max-w-3xl mx-auto leading-relaxed">
+                从江城武汉到首都北京，穿越1200公里的文化之旅
+                <br/>
+                <span class="text-lg opacity-60">Discover 12 amazing cities along the high-speed rail route</span>
+            </p>
+            <div class="flex flex-wrap justify-center gap-6 text-center">
+                <div class="bento-card px-8 py-6">
+                    <div class="text-3xl font-bold gradient-text">12</div>
+                    <div class="text-sm opacity-70">STATIONS</div>
+                </div>
+                <div class="bento-card px-8 py-6">
+                    <div class="text-3xl font-bold gradient-text">5h45m</div>
+                    <div class="text-sm opacity-70">DURATION</div>
+                </div>
+                <div class="bento-card px-8 py-6">
+                    <div class="text-3xl font-bold gradient-text">1200km</div>
+                    <div class="text-sm opacity-70">DISTANCE</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <i class="fas fa-chevron-down text-2xl opacity-50"></i>
+        </div>
+    </section>
+
+    <!-- Route Overview -->
+    <section class="py-20 fade-in" id="overview">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-6xl font-black gradient-text mb-4">路线概览</h2>
+                <p class="text-xl opacity-70">Route Overview</p>
+            </div>
+            
+            <div class="bento-card large-card glow-effect bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1493780474015-ba834fd0ce2f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                <div class="flex flex-col lg:flex-row items-center gap-12">
+                    <div class="flex-1">
+                        <canvas id="routeChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="flex-1 space-y-6">
+                        <div class="text-8xl font-black gradient-text text-center lg:text-left">12</div>
+                        <h3 class="text-3xl font-bold">精选站点</h3>
+                        <p class="text-lg opacity-90 leading-relaxed">
+                            从长江之畔的武汉出发，途经信阳、郑州、石家庄等历史文化名城，
+                            最终抵达古都北京。每一站都承载着深厚的文化底蕴和独特的美食文化。
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-8">
+                            <div class="text-center p-4 bg-white bg-opacity-10 rounded-xl backdrop-filter backdrop-blur-lg">
+                                <div class="text-2xl font-bold gradient-text">湖北</div>
+                                <div class="text-sm opacity-70">起点·武汉</div>
+                            </div>
+                            <div class="text-center p-4 bg-white bg-opacity-10 rounded-xl backdrop-filter backdrop-blur-lg">
+                                <div class="text-2xl font-bold gradient-text">北京</div>
+                                <div class="text-sm opacity-70">终点·首都</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stations Grid -->
+    <section class="py-20 fade-in" id="stations">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-6xl font-black gradient-text mb-4">沿途风光</h2>
+                <p class="text-xl opacity-70">Scenic Stops Along the Way</p>
+            </div>
+            
+            <div class="bento-grid">
+                <!-- 武汉 -->
+                <div class="bento-card large-card fade-in glow-effect bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1598624840525-8bfff4bbfe6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="flex items-start justify-between mb-8">
+                        <div>
+                            <div class="station-number">01</div>
+                            <h3 class="text-4xl font-bold mt-2">武汉</h3>
+                            <p class="text-lg opacity-90">WUHAN · 08:09</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-play text-green-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-map-marker-alt mr-3 text-blue-400"></i>
+                                知名景点 Attractions
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="attraction-item" style="background-image: url('https://picsum.photos/500/300?random=1');">
+                                    <div class="attraction-item-label">黄鹤楼</div>
+                                </div>
+                                <div class="attraction-item" style="background-image: url('https://picsum.photos/500/300?random=2');">
+                                    <div class="attraction-item-label">汉口江滩</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-utensils mr-3 text-orange-400"></i>
+                                特色美食 Cuisine
+                            </h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=3');">
+                                    <div class="food-item-label">热干面</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=4');">
+                                    <div class="food-item-label">周黑鸭</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=5');">
+                                    <div class="food-item-label">武昌鱼</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=6');">
+                                    <div class="food-item-label">豆皮</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 孝感北 -->
+                <div class="bento-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <div class="station-number">02</div>
+                            <h3 class="text-2xl font-bold">孝感北</h3>
+                            <p class="opacity-90">XIAOGAN · 08:39</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-heart text-pink-400"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-blue-400 mb-2">景点</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=11');">
+                                    <div class="food-item-label">董永公园</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=12');">
+                                    <div class="food-item-label">天紫湖</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-orange-400 mb-2">美食</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=13');">
+                                    <div class="food-item-label">孝感米酒</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://picsum.photos/300/200?random=14');">
+                                    <div class="food-item-label">麻糖</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 信阳东 -->
+                <div class="bento-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <div class="station-number">03</div>
+                            <h3 class="text-2xl font-bold">信阳东</h3>
+                            <p class="opacity-90">XINYANG · 08:59</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-leaf text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-blue-400 mb-2">景点</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">南湾湖</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">植物园</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-orange-400 mb-2">美食</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">毛尖茶</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">信阳菜</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 郑州东 -->
+                <div class="bento-card large-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1586618649496-f41ad0b5dec3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="flex items-start justify-between mb-8">
+                        <div>
+                            <div class="station-number">06</div>
+                            <h3 class="text-4xl font-bold">郑州东</h3>
+                            <p class="text-lg opacity-90">ZHENGZHOU · 10:26</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-crown text-yellow-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-university mr-3 text-blue-400"></i>
+                                文化地标
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="attraction-item" style="background-image: url('https://images.unsplash.com/photo-1570221622224-3bb8f08f166c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');">
+                                    <div class="attraction-item-label">河南博物院</div>
+                                </div>
+                                <div class="attraction-item" style="background-image: url('https://images.unsplash.com/photo-1592562124351-f0c7d8e7b9ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');">
+                                    <div class="attraction-item-label">二七广场</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-bowl-rice mr-3 text-orange-400"></i>
+                                中原美食
+                            </h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">胡辣汤</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1555881400-69d1122b5c2a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">烩面</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1563379091339-03246963d96a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">水煎包</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1544943910-4c1dc44aab44?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">开封菜</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 石家庄 -->
+                <div class="bento-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1467139701969-eae605bb57c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');">
+                    <div class="flex items-start justify-between mb-6">
+                        <div>
+                            <div class="station-number">09</div>
+                            <h3 class="text-2xl font-bold">石家庄</h3>
+                            <p class="opacity-90">SHIJIAZHUANG · 12:12</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-mountain text-purple-400"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-bold text-blue-400 mb-2">景点</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1570221622224-3bb8f08f166c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">河北博物院</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1592562124351-f0c7d8e7b9ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">解放广场</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-orange-400 mb-2">美食</h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1586618649496-f41ad0b5dec3?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">驴肉火烧</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1571167092043-5b0ce7371b3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">缸炉烧饼</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 北京西 -->
+                <div class="bento-card large-card fade-in glow-effect bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1508804185872-d7badad00f7d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');">
+                    <div class="flex items-start justify-between mb-8">
+                        <div>
+                            <div class="station-number">12</div>
+                            <h3 class="text-4xl font-bold">北京西</h3>
+                            <p class="text-lg opacity-90">BEIJING · 13:54</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-flag text-red-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-landmark mr-3 text-red-400"></i>
+                                皇城胜景
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="attraction-item" style="background-image: url('https://images.unsplash.com/photo-1508804185872-d7badad00f7d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');">
+                                    <div class="attraction-item-label">故宫博物院</div>
+                                </div>
+                                <div class="attraction-item" style="background-image: url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80');">
+                                    <div class="attraction-item-label">天安门广场</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                <i class="fas fa-drumstick-bite mr-3 text-orange-400"></i>
+                                京味美食
+                            </h4>
+                            <div class="food-grid">
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1619895092538-128341789043?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">北京烤鸭</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1555881400-69d1122b5c2a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">炸酱面</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1563379091339-03246963d96a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">豆汁焦圈</div>
+                                </div>
+                                <div class="food-item" style="background-image: url('https://images.unsplash.com/photo-1571167092043-5b0ce7371b3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');">
+                                    <div class="food-item-label">糖葫芦</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Stats -->
+                <div class="bento-card tall-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1569950203362-4c9193b38d36?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');">
+                    <h3 class="text-2xl font-bold mb-8 gradient-text">旅程数据</h3>
+                    <div class="space-y-8">
+                        <div class="text-center">
+                            <div class="text-5xl font-black gradient-text mb-2">5h45m</div>
+                            <div class="text-sm opacity-90">总用时 Duration</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-5xl font-black gradient-text mb-2">350</div>
+                            <div class="text-sm opacity-90">最高时速 km/h</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-5xl font-black gradient-text mb-2">4省</div>
+                            <div class="text-sm opacity-90">跨越省份</div>
+                        </div>
+                        <canvas id="speedChart" width="200" height="100"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cultural Heritage -->
+                <div class="bento-card fade-in bento-card-with-image" style="background-image: url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');">
+                    <div class="flex items-center mb-6">
+                        <div class="feature-icon mr-4">
+                            <i class="fas fa-scroll text-amber-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">文化遗产</h3>
+                            <p class="text-sm opacity-90">Cultural Heritage</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-3 bg-white bg-opacity-10 rounded-lg backdrop-filter backdrop-blur-lg">
+                            <div class="font-bold text-amber-400">8处</div>
+                            <div class="text-sm opacity-90">世界文化遗产</div>
+                        </div>
+                        <div class="p-3 bg-white bg-opacity-10 rounded-lg backdrop-filter backdrop-blur-lg">
+                            <div class="font-bold text-blue-400">50+</div>
+                            <div class="text-sm opacity-90">国家级景点</div>
+                        </div>
+                        <div class="p-3 bg-white bg-opacity-10 rounded-lg backdrop-filter backdrop-blur-lg">
+                            <div class="font-bold text-green-400">100+</div>
+                            <div class="text-sm opacity-90">特色美食</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 text-center border-t border-white border-opacity-10" style="background-image: linear-gradient(135deg, rgba(15, 15, 35, 0.9) 0%, rgba(26, 26, 46, 0.8) 100%), url('https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=2069&q=80'); background-size: cover; background-position: center;">
+        <div class="max-w-4xl mx-auto px-6">
+            <h3 class="text-2xl font-bold gradient-text mb-4">开启您的G522之旅</h3>
+            <p class="opacity-90 mb-8">从江城到首都，体验中华文化的千年传承</p>
+            <div class="flex justify-center space-x-8 text-2xl">
+                <i class="fab fa-weibo opacity-50 hover:opacity-100 cursor-pointer transition-opacity"></i>
+                <i class="fab fa-weixin opacity-50 hover:opacity-100 cursor-pointer transition-opacity"></i>
+                <i class="fab fa-qq opacity-50 hover:opacity-100 cursor-pointer transition-opacity"></i>
+            </div>
+            <p class="text-sm opacity-50 mt-8">© 2025 G522 Journey Explorer. 探索无界，旅程有你。</p>
+        </div>
+    </footer>
+
+    <script>
+        // Framer Motion setup
+        const { motion, useScroll, useTransform } = window.Motion;
+
+        // Scroll progress indicator
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            document.getElementById('scrollIndicator').style.transform = `scaleX(${scrolled / 100})`;
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all fade-in elements
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Parallax effect for floating elements
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallax = document.querySelectorAll('.floating-element');
+            
+            parallax.forEach((element, index) => {
+                const speed = 0.5 + (index * 0.1);
+                element.style.transform = `translateY(${scrolled * speed}px) rotate(${scrolled * 0.1}deg)`;
+            });
+        });
+
+        // Chart.js configurations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Route Chart
+            const routeCtx = document.getElementById('routeChart').getContext('2d');
+            new Chart(routeCtx, {
+                type: 'line',
+                data: {
+                    labels: ['武汉', '孝感北', '信阳东', '驻马店西', '漯河西', '郑州东', '新乡东', '安阳东', '石家庄', '定州东', '保定东', '北京西'],
+                    datasets: [{
+                        label: '时间进程',
+                        data: [0, 30, 50, 77, 101, 137, 161, 189, 243, 269, 302, 345],
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    },
+                    elements: {
+                        point: {
+                            radius: 6,
+                            backgroundColor: 'rgba(102, 126, 234, 1)'
+                        }
+                    }
+                }
+            });
+
+            // Speed Chart
+            const speedCtx = document.getElementById('speedChart').getContext('2d');
+            new Chart(speedCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['运行', '停车'],
+                    datasets: [{
+                        data: [83, 17],
+                        backgroundColor: [
+                            'rgba(102, 126, 234, 0.8)',
+                            'rgba(255, 255, 255, 0.1)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add hover effects to bento cards
+        document.querySelectorAll('.bento-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-8px) scale(1.02)';
+                card.style.boxShadow = '0 20px 40px rgba(102, 126, 234, 0.3)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+                card.style.boxShadow = 'none';
+            });
+        });
+
+        console.log('🚄 G522 Journey Explorer initialized successfully!');
+    </script>
+</body>
+</html> 

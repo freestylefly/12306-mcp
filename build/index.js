@@ -445,7 +445,7 @@ async function make12306Request(url, scheme = new URLSearchParams(), headers = {
 // Create server instance
 const server = new McpServer({
     name: '12306-mcp',
-    version: '0.3.0',
+    version: '0.3.1',
     capabilities: {
         resources: {},
         tools: {},
